@@ -7,6 +7,7 @@ include = [
   "README-TEMPLATE.md",
   # 需按所选中间件条件注册 .layer()，故参与渲染（其余 src 源码原样复制）
   "src/routes/mod.rs",
+  "src/handlers/mod.rs",
   "licenses/LICENSE-MIT",
   "licenses/LICENSE-Apache-2.0",
   "licenses/LICENSE-GPL-3.0"

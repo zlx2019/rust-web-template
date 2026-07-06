@@ -8,5 +8,5 @@ pub mod health;
 
 /// Index route: returns a welcome message.
 pub async fn index() -> &'static str {
-    "Hello, rust-web-template!"
+    "Hello, {{project-name}}"
 }
