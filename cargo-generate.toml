@@ -5,6 +5,8 @@
 include = [
   "Cargo.toml",
   "README-TEMPLATE.md",
+  # 需按所选中间件条件注册 .layer()，故参与渲染（其余 src 源码原样复制）
+  "src/routes/mod.rs",
   "licenses/LICENSE-MIT",
   "licenses/LICENSE-Apache-2.0",
   "licenses/LICENSE-GPL-3.0"
@@ -33,5 +35,15 @@ ask_common_libs = {
   type = "array",
   prompt = "Do you need some common crates?",
   choices = ["uuid", "rand", "serde_json", "chrono", "reqwest"],
+  default = []
+}
+
+# 选择性引入的 tower-http 中间件；选中后在 src/routes/mod.rs 的 router() 里注册对应 .layer()，
+# 并在 Cargo.toml 启用 tower-http 的对应 feature。未选则不引入 tower-http 依赖。
+# 同为 array 类型，--silent 模式必须显式 -d ask_middlewares=trace,cors,...（可传空 -d ask_middlewares=）。
+ask_middlewares = {
+  type = "array",
+  prompt = "Select tower-http middlewares to enable?",
+  choices = ["trace", "cors", "timeout", "compression"],
   default = []
 }

@@ -1,6 +1,6 @@
 name: Release
 
-# 推送 v* 标签时，自动生成 Changelog 并创建 GitHub Release
+# 推送 v* 标签时，生成 Changelog、创建 GitHub Release 并附加构建产物
 on:
   push:
     tags:
@@ -10,8 +10,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Release
+  changelog:
+    name: Changelog
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,4 +35,49 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body_path: CHANGES.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build ${{ matrix.target }}
+    # 模板仓库自身的 Cargo.toml 含占位符、无法被 cargo 解析，跳过二进制构建
+    if: github.repository != 'zlx2019/rust-web-template'
+    # 先建好 Release，再把产物附加上去，避免与 changelog job 争抢创建
+    needs: changelog
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 默认仅构建 Linux x64（web 服务标准部署目标，原生编译无需交叉工具链）。
+          # 如需 aarch64 等目标，可在此追加；注意部分可选依赖含 C 组件（如 reqwest 的
+          # TLS 后端），交叉编译需配套交叉 C 工具链，建议改用 cross/Docker。
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      # 打包二进制（附带 README / LICENSE）为 tar.gz；二进制名从 Cargo.toml 取
+      - name: Package
+        run: |
+          bin=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].name')
+          dir="${bin}-${{ github.ref_name }}-${{ matrix.target }}"
+          mkdir "$dir"
+          cp "target/${{ matrix.target }}/release/$bin" "$dir/"
+          if [ -f README.md ]; then cp README.md "$dir/"; fi
+          if [ -f LICENSE ]; then cp LICENSE "$dir/"; fi
+          tar czf "$dir.tar.gz" "$dir"
+          echo "ASSET=$dir.tar.gz" >> "$GITHUB_ENV"
+
+      # 将打包好的产物附加到本次 Release
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ASSET }}
           token: ${{ secrets.GITHUB_TOKEN }}

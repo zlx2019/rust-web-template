@@ -30,9 +30,11 @@ jobs:
           - scenario: minimal
             args: >-
               -d ask_common_libs=rand
+              -d ask_middlewares=
           - scenario: full
             args: >-
               -d ask_common_libs=uuid,rand,serde_json,chrono,reqwest
+              -d ask_middlewares=trace,cors,timeout,compression
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1

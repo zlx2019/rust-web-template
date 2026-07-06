@@ -10,9 +10,13 @@
 
 ## Features
 
-- axum + tokio Web 服务脚手架（`src/router.rs` 路由 + handler）
+- axum + tokio Web 服务脚手架：路由按域拆分（`src/routes/`）、handler 独立（`src/handlers/`）
+- 内置 404 兜底与健康检查（`GET /health`、`GET /ready`）
+- 统一错误类型 `AppError`（`src/error.rs`）：实现 `IntoResponse`，handler 可返回 `Result`，`?` 直接冒泡 `anyhow::Error`
 - 优雅停机：收到 Ctrl+C / SIGTERM 时停止接收新连接并等待在途请求完成（`src/shutdown.rs`）
 - 基于 `tracing` 的结构化日志（`RUST_LOG` 可调级别，缺省 `info`）
+- 环境变量配置：监听地址 `BIND_ADDR` 可覆盖，支持 `.env`（`dotenvy` 自动加载）
+- 可选 tower-http 中间件（生成时选择，在 `src/routes/mod.rs` 注册）
 
 ## 快速开始
 
@@ -62,12 +66,38 @@ cargo fmt            # 格式化
 
 ```text
 src/
-├── main.rs       服务入口：初始化日志 → 构建路由 → 启动服务（优雅停机）
-├── router.rs     路由表与 handler（GET / 、GET /health）
-└── shutdown.rs   优雅停机信号（Ctrl+C / SIGTERM）
+├── main.rs        服务入口：加载 .env → 初始化日志 → 构建路由 → 启动服务（优雅停机）
+├── error.rs       统一错误类型 AppError（实现 IntoResponse）
+├── routes/        路由：按业务域拆分，router() 汇总并注册中间件
+│   ├── mod.rs     router()：merge 各域路由 + 404 兜底 + 中间件层
+│   └── health.rs  健康检查路由（GET /health、GET /ready）
+├── handlers/      请求处理器（与路由分离）
+│   ├── mod.rs     根路由 index() 等通用 handler
+│   └── health.rs  健康检查 handler
+└── shutdown.rs    优雅停机信号（Ctrl+C / SIGTERM）
 ```
 
-新增接口：在 `src/router.rs` 的 `router()` 中注册路由，并实现对应 handler。
+新增接口：在 `src/handlers/` 实现 handler，在 `src/routes/` 对应域注册路由，并在 `routes::router()` 中 `.merge()`。handler 需要返回错误时用 `Result<T, AppError>`。
+
+## 配置
+
+通过环境变量配置，本地开发可复制 `.env.example` 为 `.env`（启动时由 `dotenvy` 自动加载）：
+
+| 变量 | 说明 | 默认 |
+|------|------|------|
+| `BIND_ADDR` | 服务监听地址 `host:port` | `0.0.0.0:3000` |
+| `RUST_LOG` | 日志级别（`tracing_subscriber` EnvFilter 语法） | `info` |
+
+## 中间件
+
+生成时可选启用 [tower-http](https://docs.rs/tower-http) 中间件，注册在 `src/routes/mod.rs` 的 `router()`：
+
+| 选项 | 层 | 说明 |
+|------|-----|------|
+| `trace` | `TraceLayer` | 请求/响应日志（`RUST_LOG=tower_http=debug` 可见） |
+| `cors` | `CorsLayer::permissive` | 跨域（示例为宽松策略，生产需按需收紧） |
+| `timeout` | `TimeoutLayer` | 请求超时（默认 30s，超时返回 408） |
+| `compression` | `CompressionLayer` | 响应压缩（gzip/deflate） |
 
 ## License
 

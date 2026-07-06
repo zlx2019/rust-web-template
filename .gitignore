@@ -18,6 +18,7 @@ desktop.ini
 /tmp/
 .env
 .env.*
+!.env.example
 
 *.gcda
 *.gcno

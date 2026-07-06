@@ -1,9 +1,12 @@
-//! Web 服务入口。
+//! Application entry point.
 //!
-//! 负责初始化日志、构建路由、绑定监听地址并启动 HTTP 服务；
-//! 服务以优雅停机方式运行，收到 Ctrl+C 或 SIGTERM 时停止接收新连接并等待在途请求完成。
+//! Loads `.env` if present, initializes logging, builds the router, binds the
+//! configured address, and serves the app with graceful shutdown on Ctrl+C /
+//! SIGTERM.
 
-mod router;
+mod error;
+mod handlers;
+mod routes;
 mod shutdown;
 
 use std::net::SocketAddr;
@@ -12,31 +15,38 @@ use anyhow::Context;
 use tokio::net::TcpListener;
 use tracing_subscriber::EnvFilter;
 
-/// 服务默认监听地址。
-const LISTEN_ADDR: &str = "0.0.0.0:3000";
+/// Bind address used when `BIND_ADDR` is not set in the environment.
+const DEFAULT_BIND_ADDR: &str = "0.0.0.0:3000";
 
-/// 程序主入口：初始化日志后启动带优雅停机的 Web 服务。
+/// Program entry point: loads configuration, sets up logging, then runs the
+/// server with graceful shutdown.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Load variables from a local `.env` file when present; in production the
+    // real process environment is used and this is a no-op.
+    dotenvy::dotenv().ok();
     init_tracing();
 
-    let app = router::router();
-    let listener = TcpListener::bind(LISTEN_ADDR)
+    let app = routes::router();
+    let bind_addr = std::env::var("BIND_ADDR").unwrap_or_else(|_| DEFAULT_BIND_ADDR.to_string());
+    let listener = TcpListener::bind(&bind_addr)
         .await
-        .with_context(|| format!("绑定监听地址失败: {LISTEN_ADDR}"))?;
-    let local_addr: SocketAddr = listener.local_addr().context("获取本地监听地址失败")?;
-    tracing::info!("服务已启动，监听于 http://{local_addr}");
+        .with_context(|| format!("failed to bind listen address: {bind_addr}"))?;
+    let local_addr: SocketAddr = listener
+        .local_addr()
+        .context("failed to get local listen address")?;
+    tracing::info!("server started, listening on http://{local_addr}");
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown::shutdown_signal())
         .await
-        .context("Web 服务运行异常")?;
+        .context("web server error")?;
 
-    tracing::info!("服务已优雅停机");
+    tracing::info!("server shut down gracefully");
     Ok(())
 }
 
-/// 初始化 tracing 日志：优先读取 `RUST_LOG` 环境变量，缺省为 `info` 级别。
+/// Initializes the tracing subscriber, reading `RUST_LOG` and defaulting to `info`.
 fn init_tracing() {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     tracing_subscriber::fmt().with_env_filter(filter).init();
