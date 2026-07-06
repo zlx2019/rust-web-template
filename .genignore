@@ -1,0 +1,10 @@
+/CLAUDE.md
+/.claude/
+/.codex/
+/target/
+/.vscode/
+/.idea/
+/README.md
+/LICENSE
+/.github/workflows/template-ci.yml
+

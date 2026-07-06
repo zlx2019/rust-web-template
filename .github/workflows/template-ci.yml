@@ -1,0 +1,69 @@
+# 模板仓库自身的 CI（经 .genignore 排除，不会进入生成的项目）。
+# 生成的项目使用 ci.yml。
+name: Template CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 同一分支的并发任务，新提交会取消正在进行的旧任务，节省 CI 资源
+concurrency:
+  group: template-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # 模板本身的 Cargo.toml 含 {{project-name}} 等占位符，cargo 无法直接解析，
+  # 因此先用 cargo-generate 展开模板，再对生成的项目执行 fmt / clippy / test / deny 检查。
+  # 注意：array 类型占位符（ask_common_libs / multi_choice）在 --silent 模式下
+  # 不支持默认值（cargo-generate 上游限制），必须显式 -d 传入。
+  check:
+    name: Generate & Check (${{ matrix.scenario }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scenario: minimal
+            args: >-
+              -d ask_common_libs=rand
+          - scenario: full
+            args: >-
+              -d ask_common_libs=uuid,rand,serde_json,chrono,reqwest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      # cargo-generate 不在 install-action 原生支持列表中，将通过 cargo-binstall 自动安装
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-generate,nextest,cargo-deny
+      - name: Generate project from template
+        run: >-
+          cargo generate --path . --name ci-smoke --silent
+          --destination ${{ runner.temp }}
+          -d gh_username=ci -d description="CI smoke test" -d license=MIT
+          ${{ matrix.args }}
+      - name: cargo fmt
+        working-directory: ${{ runner.temp }}/ci-smoke
+        run: cargo fmt --all -- --check
+      - name: cargo clippy
+        working-directory: ${{ runner.temp }}/ci-smoke
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: cargo nextest
+        working-directory: ${{ runner.temp }}/ci-smoke
+        run: cargo nextest run --all-features --no-tests pass
+      - name: cargo deny
+        working-directory: ${{ runner.temp }}/ci-smoke
+        run: cargo deny check
+
+  # 拼写检查（直接针对模板仓库本身）
+  typos:
+    name: Typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # 锁定版本，避免上游 master 变更导致 CI 意外失败（dependabot 会定期升级）
+      - uses: crate-ci/typos@v1.48.0

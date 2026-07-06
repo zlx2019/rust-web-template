@@ -1,0 +1,37 @@
+[template]
+# 仅以下文件参与 Liquid 占位渲染，其余文件原样复制（include 与 exclude 互斥，只能留一个）。
+# 注意：cliff.toml（Tera 语法）与 .github/workflows/*（${{ }} 语法）含冲突字面量，不能加入此列表。
+# README.md 是模板仓库自身的自述文件（通过 .genignore 排除），生成项目使用的是 README-TEMPLATE.md。
+include = [
+  "Cargo.toml",
+  "README-TEMPLATE.md",
+  "licenses/LICENSE-MIT",
+  "licenses/LICENSE-Apache-2.0",
+  "licenses/LICENSE-GPL-3.0"
+]
+
+# 钩子脚本（Rhai），脚本文件本身不会出现在生成的项目中
+[hooks]
+# 生成前：注入 copyright_year 变量供 LICENSE 渲染
+pre = ["pre-script.rhai"]
+# 生成后：按所选 license 就位 LICENSE 文件、就位项目 README
+post = ["post-script.rhai"]
+
+# 占位符, 生成项目时所询问信息
+[placeholders]
+# Github username
+gh_username = { type = "string", prompt = "What is your Github username?", default = "zlx2019" }
+# Project Description
+description = { type = "string", prompt = "What is the description of this project?", default = "I haven't decided yet."}
+# Open source license
+license = { type = "string", prompt = "Please select the open-source license to use?", choices = ["MIT", "Apache-2.0", "GPL-3.0"], default = "MIT" }
+
+# 一些常用的基础库（axum、tokio、anyhow、tracing 为 Web 服务必备，已固定内置，不在此列）
+# 注意：cargo-generate 0.23 的 array 类型在 --silent 模式下不支持默认值（上游限制），
+# silent 运行必须显式传 -d ask_common_libs=xxx,yyy；default 仅影响交互模式下的预勾选。
+ask_common_libs = {
+  type = "array",
+  prompt = "Do you need some common crates?",
+  choices = ["uuid", "rand", "serde_json", "chrono", "reqwest"],
+  default = []
+}

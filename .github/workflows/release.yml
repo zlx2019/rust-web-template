@@ -1,0 +1,38 @@
+name: Release
+
+# 推送 v* 标签时，自动生成 Changelog 并创建 GitHub Release
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 依据 cliff.toml 生成本次发布的 Changelog
+      # v3 基于 Docker 构建（基础镜像 Debian buster 已 EOL，apt 源 404），v4 改为直接下载二进制
+      - name: Generate changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: CHANGES.md
+          # tag 检出处于 detached HEAD，无法从分支 upstream 推断仓库地址，需显式指定
+          GITHUB_REPO: ${{ github.repository }}
+
+      # 创建 GitHub Release，正文取自上一步生成的 Changelog
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: CHANGES.md
+          token: ${{ secrets.GITHUB_TOKEN }}

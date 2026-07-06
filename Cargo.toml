@@ -1,0 +1,62 @@
+[package]
+name = "{{project-name}}"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96.0"
+authors = ["{{authors}}"]
+description = "{{description}}"
+documentation = "https://docs.rs/{{project-name}}"
+homepage = "https://github.com/{{gh_username}}/{{project-name}}"
+repository = "https://github.com/{{gh_username}}/{{project-name}}"
+readme = "README.md"
+license = "{{license}}"
+keywords = []
+
+[dependencies]
+# Web 服务核心依赖（模板固定内置）
+tokio = { version = "1", features = ["full"] }
+axum = "0.8"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+{%- if ask_common_libs contains "uuid" %}
+uuid = { version = "1", features = ["v4"] }
+{%- endif %}
+{%- if ask_common_libs contains "rand" %}
+rand = "0.10"
+{%- endif %}
+{%- if ask_common_libs contains "serde_json" %}
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+{%- endif %}
+{%- if ask_common_libs contains "chrono" %}
+chrono = "0.4"
+{%- endif %}
+{%- if ask_common_libs contains "reqwest" %}
+reqwest = { version = "0.13", features = ["json"] }
+{%- endif %}
+
+[dev-dependencies]
+
+[build-dependencies]
+
+[features]
+
+
+### Lint 规则
+[lints.rust]
+unsafe_code = "warn"      # 使用 unsafe 代码时告警（确需时可局部 #[allow]）
+missing_docs = "warn"     # 公共项缺少文档注释时告警
+
+[lints.clippy]
+unwrap_used = "warn"      # 使用 unwrap 时告警（测试/原型代码可局部 allow）
+
+### Working directory
+[workspace]
+members = []
+
+### Production packaging configuration
+[profile.release]
+
+### Debug packaging configuration
+[profile.dev]

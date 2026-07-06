@@ -1,0 +1,8 @@
+# typos 检测配置
+# typos 主要用于检测一些单词的拼写是否正确.
+
+[default.extend-words]
+
+[files]
+# 过滤不需要检测的文件.
+extend-exclude = ["CHANGELOG.md"]
