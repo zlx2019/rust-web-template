@@ -1,24 +1,24 @@
-# 安全策略
+# Security Policy
 
-## 支持的版本
+## Supported Versions
 
-我们仅对最新发布版本提供安全更新。
+Security updates are provided only for the latest released version.
 
-| 版本 | 是否支持 |
-|------|----------|
-| 最新 release | 是 |
-| 历史版本 | 否 |
+| Version | Supported |
+|---------|-----------|
+| Latest release | Yes |
+| Historical versions | No |
 
-## 报告漏洞
+## Reporting A Vulnerability
 
-如果你发现安全漏洞，请**不要**通过公开 Issue 提交，以免漏洞在修复前被利用。
+If you discover a security vulnerability, please do **not** report it through a public issue, because doing so may expose the vulnerability before a fix is available.
 
-请通过邮件私下报告：**zero9501@outlook.com**
+Please report it privately by email: **zero9501@outlook.com**
 
-报告时请尽量包含以下信息：
+When reporting, include as much of the following information as possible:
 
-- 漏洞的类型与影响范围
-- 复现步骤或 PoC（概念验证）
-- 受影响的版本
+- Vulnerability type and impact scope
+- Reproduction steps or proof of concept
+- Affected versions
 
-我们会在收到报告后尽快确认，并在修复发布后进行公开披露。
+We will confirm the report as soon as possible and disclose it publicly after a fix has been released.
