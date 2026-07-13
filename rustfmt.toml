@@ -1,0 +1,26 @@
+# 单行代码最大宽度
+max_width = 100
+# 换行符使用 LF(\n)
+newline_style = "Unix"
+# 字段名相同时简写
+use_field_init_shorthand = true
+# try! > ?
+use_try_shorthand = true
+
+# 缩进是否使用tab
+hard_tabs = false
+# 缩进宽度
+tab_spaces = 4
+# 如果有多个 #[derive] 则合并成一个
+merge_derives = true
+# 删除多余的嵌套括号
+remove_nested_parens = true
+
+
+edition = "2024"
+style_edition = "2024"
+
+# use 语句按字母序排序
+reorder_imports = true
+# mod 声明按字母序排序
+reorder_modules = true

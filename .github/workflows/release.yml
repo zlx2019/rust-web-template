@@ -26,7 +26,7 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          # 预发布标签（含 "-"，如 v1.0.0-rc.1）尚未入 cliff 的 tag 序列，用 --unreleased 生成
+          # 预发布标签
           args: ${{ contains(github.ref_name, '-') && format('--unreleased --tag {0}', github.ref_name) || '--latest' }} --strip header
         env:
           OUTPUT: CHANGES.md
@@ -37,7 +37,6 @@ jobs:
         with:
           body_path: CHANGES.md
           token: ${{ secrets.GITHUB_TOKEN }}
-          # SemVer 预发布版本（含 "-"）自动标记为 Pre-release
           prerelease: ${{ contains(github.ref_name, '-') }}
 
   # 解析二进制名。模板仓库自身的 Cargo.toml 含占位符，cargo 无法解析，直接跳过
@@ -79,13 +78,11 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           target: ${{ matrix.target }}
-      # Linux 交叉编译目标（aarch64 / musl）需要对应的链接器与 C 工具链
       - name: Setup cross toolchain
         if: runner.os == 'Linux'
         uses: taiki-e/setup-cross-toolchain-action@v1
         with:
           target: ${{ matrix.target }}
-      # 编译并打包（Unix → tar.gz，Windows → zip），附加到 Release
       - name: Build and upload
         uses: taiki-e/upload-rust-binary-action@v1
         with:
@@ -94,7 +91,6 @@ jobs:
           archive: $bin-$tag-$target
           include: README.md,LICENSE
           leading-dir: true
-          # 每个产物附带 sha256 校验和文件，供下载方验证完整性
           checksum: sha256
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -105,7 +101,6 @@ jobs:
     # 预发布版本（含 "-"）不发布
     if: ${{ !contains(github.ref_name, '-') }}
     runs-on: ubuntu-latest
-    # job 级 if 无法访问 secrets 上下文，将 secret 注入 env 后在 step 级判断
     env:
       CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
     steps:

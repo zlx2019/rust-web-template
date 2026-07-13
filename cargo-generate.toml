@@ -1,4 +1,6 @@
 [template]
+# cargo-generate minimum version
+cargo_generate_version = ">=0.19.0"
 # 仅以下文件参与 Liquid 占位渲染，其余文件原样复制（include 与 exclude 互斥，只能留一个）。
 # 注意：cliff.toml（Tera 语法）与 .github/workflows/*（${{ }} 语法）含冲突字面量，不能加入此列表。
 # README.md 是模板仓库自身的自述文件（通过 .genignore 排除），生成项目使用的是 README-TEMPLATE.md。

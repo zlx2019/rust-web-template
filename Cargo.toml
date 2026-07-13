@@ -11,6 +11,8 @@ repository = "https://github.com/{{gh_username}}/{{project-name}}"
 readme = "README.md"
 license = "{{license}}"
 keywords = []
+categories = []
+exclude = [".github/", "fixtures/", ".pre-commit-config.yaml", "_typos.toml", "cliff.toml"]
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -58,7 +60,10 @@ unsafe_code = "warn"      # 使用 unsafe 代码时告警（确需时可局部 #
 missing_docs = "warn"     # 公共项缺少文档注释时告警
 
 [lints.clippy]
-unwrap_used = "warn"      # 使用 unwrap 时告警（测试/原型代码可局部 allow）
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+dbg_macro = "warn"
 
 ### Working directory
 [workspace]
@@ -66,6 +71,9 @@ members = []
 
 ### Production packaging configuration
 [profile.release]
+lto = "thin"          # 链接时优化，提升运行性能
+codegen-units = 1     # 单编译单元，优化更充分（编译更慢）
+strip = true          # 剥离调试符号，减小二进制体积
 
 ### Debug packaging configuration
 [profile.dev]
