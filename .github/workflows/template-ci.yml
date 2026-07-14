@@ -36,7 +36,7 @@ jobs:
               -d ask_common_libs=uuid,rand,serde_json,chrono,reqwest
               -d ask_middlewares=trace,cors,timeout,compression
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       # cargo-generate 不在 install-action 原生支持列表中，将通过 cargo-binstall 自动安装
       - uses: taiki-e/install-action@v2
@@ -71,6 +71,6 @@ jobs:
     name: Typos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # 锁定版本，避免上游 master 变更导致 CI 意外失败（dependabot 会定期升级）
       - uses: crate-ci/typos@v1.48.0
