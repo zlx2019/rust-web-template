@@ -37,7 +37,7 @@ jobs:
               -d ask_middlewares=trace,cors,timeout,compression
     steps:
       - uses: actions/checkout@v7
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
       # cargo-generate 不在 install-action 原生支持列表中，将通过 cargo-binstall 自动安装
       - uses: taiki-e/install-action@v2
         with:
